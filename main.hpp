@@ -1,4 +1,4 @@
-#pragma comment(linker,"/STACK:1073741824")
+#pragma comment(linker,"/STACK:1073741824") 
 #include <iostream>
 #include <stdio.h>
 #include <stdlib.h>
@@ -29,8 +29,8 @@ bool flag = true;   //用于控制使用哪个中间结果矩阵路径 - true:1,false:2
 #define MAX 1000;
 typedef int ElementType;
 
-//坐标结构
-typedef struct direc{
+//坐标结构 - 第一个优化点 - 如何减小内存
+typedef struct direc{   //12Byte 12 * 300 = 3600Byte = 2KB -> 15000*15000Byte = 225MB - >175MB
     int x;
     int y;
     struct direc*next;
@@ -59,7 +59,7 @@ vector<vector<int>>* testVectorCreation(int row,int col,int obsLen,int obsNum,st
         int y = (dis(gen)+rand()-rand()%7)%col;
         // cout<<"genX,Y = "<<x<<","<<y<<endl;
         IniFile<<"genX,Y = "<<x<<","<<y<<endl;
-        if(x>=row || y >= col){ //下标超限
+        if(x>=row || y >= col){ //下标超限，这个障碍重新放置
             i--;
             continue;
         }
@@ -101,7 +101,7 @@ bool infection(vector<vector<int>>&dis,int row,int col,int sx,int sy,int ex,int 
     if(x == ex && y == ey){ //到达目标点
         dis[x][y] = INT_MAX;
         return true;
-    };
+    }
     dis[x][y] = abs(sx - x) + abs(sy - y);  //曼哈顿距离
     if(x == sx && y == sy)dis[x][y] = INT_MIN;
 
@@ -223,9 +223,9 @@ void FeedBack(vector<vector<int>>&dis,int row,int col,int sx,int sy,int ex,int e
     cur->next = head->next;
     head->next = cur;
 }
-bool Astar(const vector<vector<int>>&arr,int row,int col,int sx,int sy,int ex,int ey,DirecNode*head,int &len,int choose){
+bool Astar(const vector<vector<int>>arr,int row,int col,int sx,int sy,int ex,int ey,DirecNode*head,int &len,int choose){
     //row:行数,col:列数,sx:起点x坐标,sy:起点y坐标,ex:终点x坐标,ey:终点y坐标,结果放入数组s中,len-路径长度
-    //由于采用递归，且未做任何优化，因此最大只支持155*155的矩阵
+    //由于采用递归，且未做任何优化，因此最大只支持155*155的矩阵 - 后续可能会将过大矩阵进行分块执行，可以分为是否使用多线程 - 用循环来做
     //1.初始化路径矩阵
     vector<vector<int>>dis(row,vector<int>(col,0));
     for(int i = 0;i < row;i++)
@@ -236,29 +236,27 @@ bool Astar(const vector<vector<int>>&arr,int row,int col,int sx,int sy,int ex,in
         //记录中间结果矩阵
         if(flag){   //向中间结果矩阵1写入数据
             flag = false;
-            ofstream MidRes (MatrixMidRes1);
+            cout<<"向中间结果矩阵1写入数据\n";
+            ofstream MidRes1 (MatrixMidRes1);
             for(int i = 0;i < row;i++){
-                for(int j = 0;j < col;j++){
-                    MidRes<<dis[i][j];
-                    if(dis[i][j]<0) MidRes<<" ";
-                    else MidRes<<"  ";
-                }
-                MidRes<<endl;
+                for(int j = 0;j < col;j++)
+                    MidRes1<<dis[i][j]<<"\t";
+                MidRes1<<endl;
             }
+            MidRes1.close();
         }else{
             flag = true;
+            cout<<"向中间结果矩阵2写入数据\n";
             ofstream MidRes (MatrixMidRes2);
             for(int i = 0;i < row;i++){
-                for(int j = 0;j < col;j++){
-                    MidRes<<dis[i][j];
-                    if(dis[i][j]<0) MidRes<<" ";
-                    else MidRes<<"  ";
-                }
+                for(int j = 0;j < col;j++)
+                    MidRes<<dis[i][j]<<"\t";
                 MidRes<<endl;
             }
+            MidRes.close();
         }
         //从目标点开始回溯距离最近的路径
-        cout<<"开始回溯\n";
+        // cout<<"开始回溯\n";
         FeedBack(dis,row,col,sx,sy,ex,ey,head,len);
         return true;
     }else return false; //表示没有走到目标点
