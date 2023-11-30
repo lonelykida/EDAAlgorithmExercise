@@ -1,5 +1,13 @@
 {
     "files.associations": {
-        "iostream": "cpp"
+        "iostream": "cpp",
+        "new": "cpp",
+        "ostream": "cpp",
+        "locale": "cpp",
+        "filesystem": "cpp",
+        "iosfwd": "cpp",
+        "*.tcc": "cpp",
+        "chrono": "cpp",
+        "algorithm": "cpp"
     }
 }
